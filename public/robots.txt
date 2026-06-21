@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+Disallow: /_next/
+
+User-agent: Googlebot
+Allow: /
+
+Sitemap: https://punemumbaicab.com/sitemap.xml

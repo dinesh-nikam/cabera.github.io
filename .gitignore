@@ -1,0 +1,56 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+.next/
+out/
+dist/
+build/
+
+# TypeScript
+*.tsbuildinfo
+
+# Environment
+.env
+.env.*.local
+.env.local
+!.env.example
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Testing
+coverage/
+.nyc_output/
+playwright-report/
+test-results/
+
+# Cache
+.cache/
+*.cache/
+.swc/
+
+# Prisma
+# Database files - ignored (regenerated locally)
+prisma/*.db
+prisma/*.db-journal
+
+# Public assets (generated)
+public/*.webp
+public/*.avif
+
+# Temporary files
+*.tmp
+*.temp

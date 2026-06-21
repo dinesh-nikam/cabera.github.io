@@ -1,0 +1,490 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// CORE USER & AUTHENTICATION MODELS
+// ============================================
+
+model User {
+  id                String            @id @default(uuid())
+  email             String            @unique
+  phone             String?           @unique
+  password          String?           // Nullable to support existing data
+  name              String?
+  role              String            @default("CUSTOMER") // SQLite doesn't support UserRole enum
+  status            String            @default("ACTIVE")   // SQLite doesn't support UserStatus enum
+  lastLogin         DateTime?
+  emailVerified     Boolean           @default(false)
+  phoneVerified     Boolean           @default(false)
+  refreshToken      String?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  bookings          Booking[]
+  driver            Driver?
+  reviews           Review[]
+  payments          Payment[]
+  corporateAccounts CorporateAccount[]
+  createdPages      SeoPage[]
+  createdBlogPosts  BlogPost[]
+  auditLogs         AuditLog[]
+  contactLeads      ContactLead[]
+}
+
+model Customer {
+  id              String    @id @default(uuid())
+  customerCode    String    @unique
+  name            String
+  email           String?
+  phone           String
+  alternatePhone  String?
+  city            String
+  address         String?
+  notes           String?
+  source          String    @default("ORGANIC") // SQLite doesn't support LeadSource enum
+  totalBookings   Int       @default(0)
+  totalSpent      Int       @default(0)
+  lastBookingAt   DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  bookings        Booking[]
+  reviews         Review[]
+}
+
+// ============================================
+// BOOKING & TRIP MANAGEMENT MODELS
+// ============================================
+
+model Booking {
+  id              String          @id @default(uuid())
+  bookingNumber   String          @unique
+  customerId      String
+  customer        Customer        @relation(fields: [customerId], references: [id])
+  userId          String?
+  user            User?           @relation(fields: [userId], references: [id])
+
+  // Locations
+  pickupAddress   String
+  pickupLat       Float?
+  pickupLng       Float?
+  dropAddress     String
+  dropLat         Float?
+  dropLng         Float?
+
+  // Trip details
+  pickupDateTime  DateTime
+  tripType        String          @default("ONE_WAY") // SQLite doesn't support TripType enum
+  vehicleType     String          @default("SEDAN")   // SQLite doesn't support VehicleType enum
+  estimatedDistance Int           @default(0)
+  estimatedDuration Int           @default(0)
+
+  // Fare
+  baseFare        Int             @default(0)
+  distanceFare    Int             @default(0)
+  tollCharges     Int             @default(0)
+  driverAllowance Int             @default(0)
+  airportFee      Int             @default(0)
+  stateTax        Int             @default(0)
+  nightCharges    Int             @default(0)
+  promoDiscount   Int             @default(0)
+  totalAmount     Int             @default(0)
+
+  // Status
+  status          String          @default("DRAFT") // SQLite doesn't support BookingStatus enum
+  paymentStatus   String          @default("PENDING") // SQLite doesn't support PaymentStatus enum
+
+  // Relations
+  vehicleId       String?
+  vehicle         Vehicle?        @relation(fields: [vehicleId], references: [id])
+  driverId        String?
+  driver          Driver?         @relation(fields: [driverId], references: [id])
+  payment         Payment?
+  couponId        String?
+  coupon          Coupon?         @relation(fields: [couponId], references: [id])
+  corporateId     String?
+  corporate       CorporateAccount? @relation(fields: [corporateId], references: [id])
+  review          Review?
+  otpVerified     Boolean         @default(false)
+
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+}
+
+// ============================================
+// FLEET MANAGEMENT MODELS
+// ============================================
+
+model Vehicle {
+  id                String    @id @default(uuid())
+  registrationNumber  String    @unique
+  make              String
+  model             String
+  vehicleType       String    @default("SEDAN") // SQLite doesn't support VehicleType enum
+  seatingCapacity   Int       @default(4)
+  luggageCapacity   Int       @default(2)
+  fuelType          String    @default("PETROL") // SQLite doesn't support FuelType enum
+  color             String?
+  year              Int
+  insuranceExpiry   DateTime?
+  permitExpiry      DateTime?
+  pollutionExpiry   DateTime?
+  fitnessExpiry     DateTime?
+  status            String    @default("ACTIVE") // SQLite doesn't support VehicleStatus enum
+  isActive          Boolean   @default(true)
+  features          String?   // SQLite doesn't support String[] array, use comma-separated string or JSON string
+  driverId          String?   @unique
+  driver            Driver?   @relation(fields: [driverId], references: [id])
+  bookings          Booking[]
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+}
+
+model Driver {
+  id              String    @id @default(uuid())
+  driverCode      String    @unique @default(uuid())
+  name            String
+  phone           String    @unique
+  alternativePhone String?
+  aadhaar         String?
+  licenseNumber   String    @unique
+  licenseExpiry   DateTime?
+  experience      Int       @default(0)
+  rating          Float     @default(5.0)
+  totalTrips      Int       @default(0)
+  earnings        Int       @default(0)
+  status          String    @default("PENDING_APPROVAL") // SQLite doesn't support DriverStatus enum
+  isOnline        Boolean   @default(false)
+  lastLocationLat Float?
+  lastLocationLng Float?
+  userId          String?   @unique
+  user            User?     @relation(fields: [userId], references: [id])
+  vehicle         Vehicle?
+  bookings        Booking[]
+  reviews         Review[]  @relation("DriverReviews")
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+// ============================================
+// PAYMENT & FINANCE MODELS
+// ============================================
+
+model Payment {
+  id              String        @id @default(uuid())
+  bookingId       String        @unique
+  booking         Booking       @relation(fields: [bookingId], references: [id])
+  userId          String?
+  user            User?         @relation(fields: [userId], references: [id])
+  paymentMethod   String        @default("CASH") // SQLite doesn't support PaymentMethod enum
+  amount          Int
+  status          String        @default("PENDING") // SQLite doesn't support PaymentStatus enum
+  transactionId   String?       @unique
+  gatewayOrderId  String?
+  gatewayPaymentId String?
+  gatewaySignature String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+// ============================================
+// COUPON & PROMOTIONS
+// ============================================
+
+model Coupon {
+  id              String    @id @default(uuid())
+  code            String    @unique
+  title           String?
+  description     String?
+  discountType    String    @default("PERCENTAGE") // SQLite doesn't support DiscountType enum
+  discountValue   Float
+  maxDiscount     Int?
+  minAmount       Int       @default(0)
+  validFrom       DateTime
+  validTo         DateTime
+  usageLimit      Int?
+  usedCount       Int       @default(0)
+  userLimit       Int?
+  applicableTypes String?   // SQLite doesn't support array VehicleType[], so use comma-separated
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  bookings        Booking[]
+}
+
+// ============================================
+// REVIEWS & RATINGS
+// ============================================
+
+model Review {
+  id              String    @id @default(uuid())
+  bookingId       String    @unique
+  booking         Booking   @relation(fields: [bookingId], references: [id])
+  customerId      String
+  customer        Customer  @relation(fields: [customerId], references: [id])
+  driverId        String?
+  driver          Driver?   @relation("DriverReviews", fields: [driverId], references: [id])
+  userId          String?
+  user            User?     @relation(fields: [userId], references: [id])
+  rating          Int       @default(5)
+  comment         String?
+  response        String?
+  isVerified      Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+// ============================================
+// LEAD MANAGEMENT
+// ============================================
+
+model ContactLead {
+  id              String    @id @default(uuid())
+  name            String
+  email           String?
+  phone           String
+  alternatePhone  String?
+  source          String    @default("ORGANIC") // SQLite doesn't support LeadSource enum
+  status          String    @default("NEW") // SQLite doesn't support LeadStatus enum
+  assignedTo      String?
+  assignedUser    User?     @relation(fields: [assignedTo], references: [id])
+  notes           String?
+  followUpDate    DateTime?
+  convertedToBooking String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+// ============================================
+// CORPORATE ACCOUNTS
+// ============================================
+
+model CorporateAccount {
+  id              String    @id @default(uuid())
+  companyName     String
+  contactName     String
+  email           String    @unique
+  phone           String
+  alternatePhone  String?
+  address         String?
+  gstin           String?
+  monthlyLimit    Int?
+  currentUsage    Int       @default(0)
+  billingCycle    String    @default("MONTHLY") // SQLite doesn't support BillingCycle enum
+  paymentTerms    String?
+  status          String    @default("ACTIVE") // SQLite doesn't support AccountStatus enum
+  note            String?
+  userId          String?   @unique
+  user            User?     @relation(fields: [userId], references: [id])
+  bookings        Booking[]
+  employees       Employee[] @relation("CorporateEmployees")
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model Employee {
+  id              String    @id @default(uuid())
+  employeeId      String    @unique
+  name            String
+  email           String?
+  phone           String?
+  department      String?
+  designation     String?
+  corporateId     String?
+  corporate       CorporateAccount? @relation("CorporateEmployees", fields: [corporateId], references: [id])
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+// ============================================
+// DYNAMIC PRICING
+// ============================================
+
+model PricingRule {
+  id                String      @id @default(uuid())
+  routeFrom         String
+  routeTo           String
+  vehicleType       String      @default("SEDAN") // SQLite doesn't support VehicleType enum
+  basePrice         Int
+  perKmCharge       Int         @default(0)
+  tollCharges       Int         @default(0)
+  driverAllowance   Int         @default(0)
+  airportFee        Int         @default(0)
+  stateTax          Int         @default(0)
+  nightMultiplier   Float       @default(1.25)
+  weekendMultiplier Float       @default(1.15)
+  holidayMultiplier Float       @default(1.5)
+  seasonalMultiplier Float      @default(1.0)
+  isActive          Boolean     @default(true)
+  isCorporate       Boolean     @default(false)
+  corporateId       String?
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+}
+
+// ============================================
+// PROGRAMMATIC SEO
+// ============================================
+
+model SeoPage {
+  id              String    @id @default(uuid())
+  slug            String    @unique
+  title           String
+  metaTitle       String?
+  metaDesc        String?
+  canonicalUrl    String?
+  content         String
+  structuredData  String?
+  pageType        String    @default("ROUTE") // SQLite doesn't support PageType enum
+  templateId      String?
+  status          String    @default("DRAFT") // SQLite doesn't support PageStatus enum
+  seoScore        Int?
+  publishDate     DateTime?
+  createdById     String?
+  createdBy       User?     @relation(fields: [createdById], references: [id])
+  analytics       SeoAnalytics?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model SeoTemplate {
+  id              String    @id @default(uuid())
+  name            String
+  description     String?
+  contentTemplate String
+  variables       String?   // SQLite doesn't support string[], store as comma-separated or JSON
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model SeoAnalytics {
+  id              String    @id @default(uuid())
+  pageId          String    @unique
+  page            SeoPage   @relation(fields: [pageId], references: [id])
+  impressions     Int       @default(0)
+  clicks          Int       @default(0)
+  ctr             Float     @default(0)
+  avgPosition     Float     @default(0)
+  lastUpdated     DateTime?
+}
+
+// ============================================
+// BLOG & CONTENT
+// ============================================
+
+model BlogPost {
+  id              String    @id @default(uuid())
+  title           String
+  slug            String    @unique
+  excerpt         String?
+  content         String
+  featuredImage   String?
+  authorId        String?
+  author          User?     @relation(fields: [authorId], references: [id])
+  tags            String?   // SQLite doesn't support string[], store as comma-separated
+  category        String
+  metaTitle       String?
+  metaDesc        String?
+  isPublished     Boolean   @default(false)
+  publishedAt     DateTime?
+  viewCount       Int       @default(0)
+  readTime        Int?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+// ============================================
+// WHATSAPP AUTOMATION
+// ============================================
+
+model WhatsAppTemplate {
+  id              String    @id @default(uuid())
+  name            String
+  templateId      String    @unique
+  category        String    // SQLite doesn't support TemplateCategory enum
+  body            String
+  variables       String?   // SQLite doesn't support string[]
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  logs            WhatsAppLog[]
+}
+
+model WhatsAppLog {
+  id              String    @id @default(uuid())
+  templateId      String?
+  template        WhatsAppTemplate? @relation(fields: [templateId], references: [id])
+  toNumber        String
+  body            String
+  status          String    @default("PENDING") // SQLite doesn't support MessageStatus enum
+  messageId       String?
+  sentAt          DateTime?
+  deliveredAt     DateTime?
+  readAt          DateTime?
+  failureReason   String?
+  relatedBookingId String?
+  createdAt       DateTime  @default(now())
+}
+
+// ============================================
+// ANALYTICS & TRACKING
+// ============================================
+
+model AnalyticsEvent {
+  id              String    @id @default(uuid())
+  eventType       String
+  eventData       String?
+  userId          String?
+  sessionId       String?
+  ipAddress       String?
+  userAgent       String?
+  path            String?
+  referrer        String?
+  createdAt       DateTime  @default(now())
+}
+
+model AnalyticsMetric {
+  id              String    @id @default(uuid())
+  date            DateTime  @default(now())
+  metricType      String
+  value           Float
+  dimension1      String?
+  dimension2      String?
+  createdAt       DateTime  @default(now())
+}
+
+// ============================================
+// AUDIT & SECURITY
+// ============================================
+
+model AuditLog {
+  id              String    @id @default(uuid())
+  userId          String?
+  user            User?     @relation(fields: [userId], references: [id])
+  action          String
+  resourceType    String
+  resourceId      String?
+  oldData         String?
+  newData         String?
+  ipAddress       String?
+  userAgent       String?
+  status          String    @default("SUCCESS") // SQLite doesn't support AuditStatus enum
+  createdAt       DateTime  @default(now())
+}
+
+// ============================================
+// SETTINGS
+// ============================================
+
+model Setting {
+  id              String    @id @default(uuid())
+  key             String    @unique
+  value           String
+  description     String?
+  isPublic        Boolean   @default(false)
+  updatedAt       DateTime  @updatedAt
+}

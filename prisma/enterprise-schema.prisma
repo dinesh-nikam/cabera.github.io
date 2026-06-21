@@ -1,0 +1,658 @@
+// ============================================
+// ENTERPRISE CAB BOOKING PLATFORM SCHEMA
+// Phase 2 - Complete Database Architecture
+// ============================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// CORE USER & AUTHENTICATION MODELS
+// ============================================
+
+model User {
+  id                String            @id @default(uuid())
+  email             String            @unique
+  phone             String?           @unique
+  password          String
+  name              String?
+  role              UserRole          @default(CUSTOMER)
+  status            UserStatus        @default(ACTIVE)
+  lastLogin         DateTime?
+  emailVerified     Boolean           @default(false)
+  phoneVerified     Boolean           @default(false)
+  refreshToken    String?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  bookings          Booking[]
+  driver            Driver?
+  reviews           Review[]
+  payments          Payment[]
+  corporateAccounts CorporateAccount[]
+  createdPages      SeoPage[]
+  createdBlogPosts  BlogPost[]
+  auditLogs         AuditLog[]
+}
+
+model Customer {
+  id              String    @id @default(uuid())
+  customerCode    String    @unique
+  name            String
+  email           String?
+  phone           String
+  alternatePhone  String?
+  city            String
+  address         String?
+  notes           String?
+  source          LeadSource @default(ORGANIC)
+  totalBookings   Int       @default(0)
+  totalSpent      Int       @default(0)
+  lastBookingAt   DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  bookings        Booking[]
+  reviews         Review[]
+}
+
+enum UserRole {
+  SUPER_ADMIN
+  OPERATIONS_MANAGER
+  DISPATCHER
+  SEO_MANAGER
+  CUSTOMER_SUPPORT
+  CORPORATE_ADMIN
+  CUSTOMER
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  PENDING_VERIFICATION
+}
+
+enum LeadSource {
+  ORGANIC
+  GOOGLE_ADS
+  FACEBOOK
+  WHATSAPP
+  DIRECT
+  REFERRAL
+}
+
+// ============================================
+// BOOKING & TRIP MANAGEMENT MODELS
+// ============================================
+
+model Booking {
+  id              String          @id @default(uuid())
+  bookingNumber   String          @unique
+  customerId      String
+  customer        Customer        @relation(fields: [customerId], references: [id])
+  userId          String?
+  user            User?           @relation(fields: [userId], references: [id])
+
+  // Locations
+  pickupAddress   String
+  pickupLat       Float?
+  pickupLng       Float?
+  dropAddress     String
+  dropLat         Float?
+  dropLng         Float?
+
+  // Trip details
+  pickupDateTime  DateTime
+  tripType        TripType        @default(ONE_WAY)
+  vehicleType     VehicleType     @default(SEDAN)
+  estimatedDistance Int
+  estimatedDuration Int
+
+  // Fare
+  baseFare        Int
+  distanceFare    Int
+  tollCharges     Int
+  driverAllowance Int
+  airportFee      Int
+  stateTax        Int
+  nightCharges    Int
+  promoDiscount   Int
+  totalAmount     Int
+
+  // Status
+  status          BookingStatus   @default(DRAFT)
+  paymentStatus   PaymentStatus   @default(PENDING)
+
+  // Relations
+  vehicleId       String?
+  vehicle         Vehicle?        @relation(fields: [vehicleId], references: [id])
+  driverId        String?
+  driver          Driver?         @relation(fields: [driverId], references: [id])
+  payment         Payment?
+  couponId        String?
+  coupon          Coupon?         @relation(fields: [couponId], references: [id])
+  corporateId     String?
+  corporate       CorporateAccount? @relation(fields: [corporateId], references: [id])
+  review          Review?
+  otpVerified     Boolean         @default(false)
+
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+}
+
+enum TripType {
+  ONE_WAY
+  ROUND_TRIP
+  AIRPORT_TRANSFER
+  HOURLY_RENTAL
+}
+
+enum BookingStatus {
+  DRAFT
+  PENDING
+  CONFIRMED
+  ASSIGNED
+  DRIVER_REACHED
+  TRIP_STARTED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum VehicleType {
+  SEDAN
+  SUV
+  PREMIUM_SUV
+  LUXURY
+  TEMPO_TRAVELLER
+  MINI_BUS
+}
+
+// ============================================
+// FLEET MANAGEMENT MODELS
+// ============================================
+
+model Vehicle {
+  id                String    @id @default(uuid())
+  registrationNumber  String    @unique
+  make              String
+  model             String
+  vehicleType       VehicleType @default(SEDAN)
+  seatingCapacity   Int       @default(4)
+  luggageCapacity   Int       @default(2)
+  fuelType          FuelType  @default(PETROL)
+  color             String?
+  year              Int
+  insuranceExpiry   DateTime?
+  permitExpiry      DateTime?
+  pollutionExpiry   DateTime?
+  fitnessExpiry     DateTime?
+  status            VehicleStatus @default(ACTIVE)
+  isActive          Boolean   @default(true)
+  features          String[]  @default([])
+  driverId          String?   @unique
+  driver            Driver?   @relation(fields: [driverId], references: [id])
+  bookings          Booking[]
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+}
+
+enum VehicleStatus {
+  ACTIVE
+  INACTIVE
+  MAINTENANCE
+  DOCUMENT_EXPIRED
+}
+
+enum FuelType {
+  PETROL
+  DIESEL
+  CNG
+  ELECTRIC
+}
+
+model Driver {
+  id              String    @id @default(uuid())
+  driverCode      String    @unique
+  name            String
+  phone           String    @unique
+  alternativePhone String?
+  aadhaar         String?
+  licenseNumber   String    @unique
+  licenseExpiry   DateTime?
+  experience      Int       @default(0)
+  rating          Float     @default(5.0)
+  totalTrips      Int       @default(0)
+  earnings        Int       @default(0)
+  status          DriverStatus @default(PENDING_APPROVAL)
+  isOnline        Boolean   @default(false)
+  lastLocationLat Float?
+  lastLocationLng Float?
+  userId          String?   @unique
+  user            User?     @relation(fields: [userId], references: [id])
+  vehicleId       String?   @unique
+  vehicle         Vehicle?  @relation(fields: [vehicleId], references: [id])
+  bookings        Booking[]
+  reviews         Review[]  @relation("DriverReviews")
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+enum DriverStatus {
+  PENDING_APPROVAL
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  DOCUMENT_PENDING
+  DOCUMENT_EXPIRED
+}
+
+// ============================================
+// PAYMENT & FINANCE MODELS
+// ============================================
+
+model Payment {
+  id              String        @id @default(uuid())
+  bookingId       String        @unique
+  booking         Booking       @relation(fields: [bookingId], references: [id])
+  userId          String?
+  user            User?         @relation(fields: [userId], references: [id])
+  paymentMethod   PaymentMethod @default(CASH)
+  amount          Int
+  status          PaymentStatus @default(PENDING)
+  transactionId   String?       @unique
+  gatewayOrderId  String?
+  gatewayPaymentId String?
+  gatewaySignature String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+enum PaymentMethod {
+  CASH
+  CARD
+  UPI
+  RAZORPAY
+  STRIPE
+  WALLET
+  CORPORATE_CREDIT
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  REFUNDED
+  PARTIAL_REFUND
+}
+
+// ============================================
+// COUPON & PROMOTIONS
+// ============================================
+
+model Coupon {
+  id              String    @id @default(uuid())
+  code            String    @unique
+  title           String?
+  description     String?
+  discountType    DiscountType @default(PERCENTAGE)
+  discountValue   Float
+  maxDiscount     Int?
+  minAmount       Int       @default(0)
+  validFrom       DateTime
+  validTo         DateTime
+  usageLimit      Int?
+  usedCount       Int       @default(0)
+  userLimit       Int?
+  applicableTypes VehicleType[] @default([])
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  bookings        Booking[]
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED_AMOUNT
+}
+
+// ============================================
+// REVIEWS & RATINGS
+// ============================================
+
+model Review {
+  id              String    @id @default(uuid())
+  bookingId       String    @unique
+  booking         Booking   @relation(fields: [bookingId], references: [id])
+  customerId      String
+  customer        Customer  @relation(fields: [customerId], references: [id])
+  driverId        String?
+  driver          Driver?   @relation("DriverReviews", fields: [driverId], references: [id])
+  userId          String?
+  user            User?     @relation(fields: [userId], references: [id])
+  rating          Int       @default(5)
+  comment         String?
+  response        String?
+  isVerified      Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+// ============================================
+// LEAD MANAGEMENT
+// ============================================
+
+model ContactLead {
+  id              String    @id @default(uuid())
+  name            String
+  email           String?
+  phone           String
+  alternatePhone  String?
+  source          LeadSource @default(ORGANIC)
+  status          LeadStatus @default(NEW)
+  assignedTo      String?
+  assignedUser    User?     @relation(fields: [assignedTo], references: [id])
+  notes           String?
+  followUpDate    DateTime?
+  convertedToBooking String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  FOLLOW_UP
+  CONVERTED
+  CLOSED
+  REJECTED
+}
+
+// ============================================
+// CORPORATE ACCOUNTS
+// ============================================
+
+model CorporateAccount {
+  id              String    @id @default(uuid())
+  companyName     String
+  contactName     String
+  email           String    @unique
+  phone           String
+  alternatePhone  String?
+  address         String?
+  gstin           String?
+  monthlyLimit    Int?
+  currentUsage    Int       @default(0)
+  billingCycle    BillingCycle @default(MONTHLY)
+  paymentTerms    String?
+  status          AccountStatus @default(ACTIVE)
+  note            String?
+  userId          String?   @unique
+  user            User?     @relation(fields: [userId], references: [id])
+  bookings        Booking[]
+  employees       Employee[] @relation("CorporateEmployees")
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model Employee {
+  id              String    @id @default(uuid())
+  employeeId      String    @unique
+  name            String
+  email           String?
+  phone           String?
+  department      String?
+  designation     String?
+  corporateId     String?
+  corporate       CorporateAccount? @relation("CorporateEmployees", fields: [corporateId], references: [id])
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+enum BillingCycle {
+  MONTHLY
+  QUARTERLY
+  ANNUALLY
+}
+
+enum AccountStatus {
+  ACTIVE
+  SUSPENDED
+  CANCELLED
+  PENDING_APPROVAL
+}
+
+// ============================================
+// DYNAMIC PRICING
+// ============================================
+
+model PricingRule {
+  id                String      @id @default(uuid())
+  routeFrom         String
+  routeTo           String
+  vehicleType       VehicleType @default(SEDAN)
+  basePrice         Int
+  perKmCharge       Int         @default(0)
+  tollCharges       Int         @default(0)
+  driverAllowance   Int         @default(0)
+  airportFee        Int         @default(0)
+  stateTax          Int         @default(0)
+  nightMultiplier   Float       @default(1.25)
+  weekendMultiplier Float       @default(1.15)
+  holidayMultiplier Float       @default(1.5)
+  seasonalMultiplier Float      @default(1.0)
+  isActive          Boolean     @default(true)
+  isCorporate       Boolean     @default(false)
+  corporateId       String?
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+}
+
+// ============================================
+// PROGRAMMATIC SEO
+// ============================================
+
+model SeoPage {
+  id              String    @id @default(uuid())
+  slug            String    @unique
+  title           String
+  metaTitle       String?
+  metaDesc        String?
+  canonicalUrl    String?
+  content         String
+  structuredData  String?
+  pageType        PageType  @default(ROUTE)
+  templateId      String?
+  status          PageStatus @default(DRAFT)
+  seoScore        Int?
+  publishDate     DateTime?
+  createdById     String?
+  createdBy       User?     @relation(fields: [createdById], references: [id])
+  analytics       SeoAnalytics?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+enum PageType {
+  CITY
+  AREA
+  ROUTE
+  AIRPORT
+  CORPORATE
+  SERVICE
+}
+
+enum PageStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+model SeoTemplate {
+  id              String    @id @default(uuid())
+  name            String
+  description     String?
+  contentTemplate String
+  variables       String[]
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+model SeoAnalytics {
+  id              String    @id @default(uuid())
+  pageId          String    @unique
+  page            SeoPage   @relation(fields: [pageId], references: [id])
+  impressions     Int       @default(0)
+  clicks          Int       @default(0)
+  ctr             Float     @default(0)
+  avgPosition     Float     @default(0)
+  lastUpdated     DateTime?
+}
+
+// ============================================
+// BLOG & CONTENT
+// ============================================
+
+model BlogPost {
+  id              String    @id @default(uuid())
+  title           String
+  slug            String    @unique
+  excerpt         String?
+  content         String
+  featuredImage   String?
+  authorId        String?
+  author          User?     @relation(fields: [authorId], references: [id])
+  tags            String[]
+  category        String
+  metaTitle       String?
+  metaDesc        String?
+  isPublished     Boolean   @default(false)
+  publishedAt     DateTime?
+  viewCount       Int       @default(0)
+  readTime        Int?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+// ============================================
+// WHATSAPP AUTOMATION
+// ============================================
+
+model WhatsAppTemplate {
+  id              String    @id @default(uuid())
+  name            String
+  templateId      String    @unique
+  category        TemplateCategory
+  body            String
+  variables       String[]
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+enum TemplateCategory {
+  BOOKING_CREATED
+  BOOKING_CONFIRMED
+  DRIVER_ASSIGNED
+  TRIP_STARTED
+  TRIP_COMPLETED
+  REVIEW_REQUEST
+  PROMO
+  REMINDER
+}
+
+model WhatsAppLog {
+  id              String    @id @default(uuid())
+  templateId      String?
+  template        WhatsAppTemplate? @relation(fields: [templateId], references: [id])
+  toNumber        String
+  body            String
+  status          MessageStatus @default(PENDING)
+  messageId       String?
+  sentAt          DateTime?
+  deliveredAt     DateTime?
+  readAt          DateTime?
+  failureReason   String?
+  relatedBookingId String?
+  createdAt       DateTime  @default(now())
+}
+
+enum MessageStatus {
+  PENDING
+  SENT
+  DELIVERED
+  READ
+  FAILED
+}
+
+// ============================================
+// ANALYTICS & TRACKING
+// ============================================
+
+model AnalyticsEvent {
+  id              String    @id @default(uuid())
+  eventType       String
+  eventData       String?
+  userId          String?
+  sessionId       String?
+  ipAddress       String?
+  userAgent       String?
+  path            String?
+  referrer        String?
+  createdAt       DateTime  @default(now())
+}
+
+model AnalyticsMetric {
+  id              String    @id @default(uuid())
+  date            DateTime  @default(now())
+  metricType      String
+  value           Float
+  dimension1      String?
+  dimension2      String?
+  createdAt       DateTime  @default(now())
+}
+
+// ============================================
+// AUDIT & SECURITY
+// ============================================
+
+model AuditLog {
+  id              String    @id @default(uuid())
+  userId          String?
+  user            User?     @relation(fields: [userId], references: [id])
+  action          String
+  resourceType    String
+  resourceId      String?
+  oldData         String?
+  newData         String?
+  ipAddress       String?
+  userAgent       String?
+  status          AuditStatus @default(SUCCESS)
+  createdAt       DateTime  @default(now())
+}
+
+enum AuditStatus {
+  SUCCESS
+  FAILED
+  WARNING
+}
+
+// ============================================
+// SETTINGS
+// ============================================
+
+model Setting {
+  id              String    @id @default(uuid())
+  key             String    @unique
+  value           String
+  description     String?
+  isPublic        Boolean   @default(false)
+  updatedAt       DateTime  @updatedAt
+}
