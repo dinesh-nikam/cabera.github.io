@@ -18,10 +18,10 @@ interface VehicleCardProps {
 }
 
 const vehicleImages = {
-  sedan: "/images/vehicles/sedan.jpg",
-  suv: "/images/vehicles/suv.jpg",
-  "premium-suv": "/images/vehicles/premium-suv.jpg",
-  luxury: "/images/vehicles/luxury.jpg",
+  sedan: "/images/vehicles/sedan.png",
+  suv: "/images/vehicles/suv.png",
+  "premium-suv": "/images/vehicles/premium-suv.png",
+  luxury: "/images/vehicles/luxury.png",
 };
 
 const vehicleFeatures = {

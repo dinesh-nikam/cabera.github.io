@@ -12,7 +12,7 @@ const fleet = [
     luggage: 2,
     features: ["AC", "Music System", "GPS", "First Aid Kit"],
     price: 1500,
-    image: "/images/vehicles/sedan.jpg",
+    image: "/images/vehicles/sedan.png",
   },
   {
     id: "suv",
@@ -22,7 +22,7 @@ const fleet = [
     luggage: 4,
     features: ["AC", "Music System", "GPS", "First Aid Kit", "Charging Point"],
     price: 2000,
-    image: "/images/vehicles/suv.jpg",
+    image: "/images/vehicles/suv.png",
   },
   {
     id: "premium-suv",
@@ -39,7 +39,7 @@ const fleet = [
       "Reclining Seats",
     ],
     price: 2500,
-    image: "/images/vehicles/premium-suv.jpg",
+    image: "/images/vehicles/premium-suv.png",
   },
   {
     id: "luxury",
@@ -56,7 +56,7 @@ const fleet = [
       "Wi-Fi",
     ],
     price: 4000,
-    image: "/images/vehicles/luxury.jpg",
+    image: "/images/vehicles/luxury.png",
   },
 ];
 

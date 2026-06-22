@@ -38,7 +38,7 @@ export function validateEnv() {
       ", ",
     )}. Please configure them in your .env or .env.local file.`;
     console.error(errorMsg);
-    
+
     // Check if we are in the Next.js build compilation phase
     const isBuildPhase = process.env.NEXT_PHASE === "phase-production-build";
 

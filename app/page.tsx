@@ -26,7 +26,7 @@ export const metadata = {
     type: "website",
     images: [
       {
-        url: "/images/og-homepage.jpg",
+        url: "/images/og-homepage.png",
         width: 1200,
         height: 630,
         alt: "Pune Mumbai Premium Cab Service",
