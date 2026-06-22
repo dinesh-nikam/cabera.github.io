@@ -37,7 +37,7 @@ export const metadata = {
 
 export default function HomePage() {
   return (
-    <main className="min-h-screen bg-background relative select-none">
+    <main className="min-h-screen bg-background relative">
       {/* Primary header overlay */}
       <NavigationBar />
 

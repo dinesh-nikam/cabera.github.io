@@ -4,19 +4,21 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Commands
 
-| Command                      | Description                                       |
-| ---------------------------- | ------------------------------------------------- |
-| `bun install`                | Install dependencies                              |
-| `bun run dev`                | Start Next.js development server (localhost:3000) |
-| `bun run build`              | Build for production                              |
-| `bun run start`              | Start production server                           |
-| `bun run lint`               | Run ESLint + Prettier check                       |
-| `bun run lint:fix`           | Auto-fix linting errors                           |
-| `bun run typecheck`          | Run TypeScript type checking                      |
-| `bun run test`               | Run Jest unit tests                               |
-| `bun run test:e2e`           | Run Playwright end-to-end tests                   |
-| `bun run prisma migrate dev` | Run database migrations                           |
-| `bun run prisma generate`    | Generate Prisma client                            |
+| Command                                | Description                                       |
+| -------------------------------------- | ------------------------------------------------- |
+| `bun install`                          | Install dependencies                              |
+| `bun run dev`                          | Start Next.js development server (localhost:3000) |
+| `bun run build`                        | Build for production                              |
+| `bun run start`                        | Start production server                           |
+| `bun run lint`                         | Run ESLint + Prettier check                       |
+| `bun run lint:fix`                     | Auto-fix linting errors                           |
+| `bun run typecheck`                    | Run TypeScript type checking                      |
+| `bun run test`                         | Run Jest unit tests                               |
+| `bun test lib/__tests__/utils.test.ts` | Run single test file                              |
+| `bun run test:e2e`                     | Run Playwright end-to-end tests                   |
+| `bun run prisma migrate dev`           | Run database migrations                           |
+| `bun run prisma generate`              | Generate Prisma client                            |
+| `bun run seo:validate`                 | Validate SEO pages                                |
 
 ## Architecture Overview
 
@@ -87,3 +89,37 @@ scripts/      # SEO page generator
 - Blog: `/blog/[slug]`
 
 See `PHASE2-ARCHITECTURE.md` for full system diagrams, state machine, and API endpoints.
+
+## UI Components Architecture
+
+### Component Patterns
+
+| Component         | Pattern                                         |
+| ----------------- | ----------------------------------------------- |
+| `TrackingMap`     | Three.js route visualization with driver marker |
+| `PaymentCheckout` | Payment modal with Razorpay/Stripe/UPI support  |
+
+### Payment Integration
+
+- **PaymentService** in `lib/services/payment-service.ts` handles:
+  - Razorpay order creation
+  - Stripe payment intents
+  - UPI payment processing
+- **PaymentCheckout** component provides UI for card/UPI/netbanking
+- API endpoint: `/api/payments/create` for order creation
+
+### Booking Tracking
+
+- **TrackingProvider** in `lib/tracking/tracking-context.tsx` provides SSE connection
+- **TrackingMap** component renders 3D map with driver location
+- API endpoint: `/api/tracking/ws` streams location updates
+- **Booking Flow**: Uses `BookingWidget` with 7 sequential steps (pickup → drop → datetime → vehicle → summary → details → confirmation)
+- **Animation System**: Custom hooks in `lib/motion/motion-system.ts` for magnetic effects, reduced motion support
+- **Form Validation**: Inline validation with aria-live regions, errors displayed near fields
+
+### Accessibility Requirements
+
+- All interactive elements must be minimum 44×44px touch targets
+- Use `text-error` for error states (higher contrast #FF6B6B on dark background)
+- Reduced motion: Use `motion-reduce:animate-none` on spinning animations
+- Skip links in admin layout for keyboard navigation

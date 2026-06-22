@@ -152,18 +152,20 @@ export function VehicleForm({
               }))
             }
             className={`input-luxury pl-12 w-full ${
-              errors.registrationNumber ? "border-red-400" : ""
+              errors.registrationNumber ? "border-error" : ""
             }`}
             aria-invalid={!!errors.registrationNumber}
             aria-describedby={
               errors.registrationNumber ? "registration-error" : undefined
             }
+            autoComplete="off"
+            inputMode="text"
           />
         </div>
         {errors.registrationNumber && (
           <p
             id="registration-error"
-            className="text-red-400 text-sm mt-1"
+            className="text-error text-sm mt-1"
             role="alert"
           >
             {errors.registrationNumber}
@@ -191,7 +193,7 @@ export function VehicleForm({
                 setFormData((prev) => ({ ...prev, make: e.target.value }))
               }
               className={`input-luxury pl-12 w-full ${
-                errors.make ? "border-red-400" : ""
+                errors.make ? "border-error" : ""
               }`}
               aria-invalid={!!errors.make}
             />
@@ -214,7 +216,7 @@ export function VehicleForm({
               setFormData((prev) => ({ ...prev, model: e.target.value }))
             }
             className={`input-luxury w-full ${
-              errors.model ? "border-red-400" : ""
+              errors.model ? "border-error" : ""
             }`}
             aria-invalid={!!errors.model}
           />
@@ -232,7 +234,7 @@ export function VehicleForm({
               key={type.value}
               type="button"
               onClick={() => handleVehicleTypeChange(type.value)}
-              className={`py-2 px-3 rounded-lg text-sm font-medium transition-all ${
+              className={`min-h-[44px] py-3 px-4 rounded-lg text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-luxury-400 ${
                 formData.vehicleType === type.value
                   ? "bg-luxury-400 text-background"
                   : "bg-surface-light hover:bg-luxury-400/10"
@@ -364,7 +366,7 @@ export function VehicleForm({
                 }))
               }
               className={`input-luxury pl-12 w-full ${
-                errors.insuranceExpiry ? "border-red-400" : ""
+                errors.insuranceExpiry ? "border-error" : ""
               }`}
               aria-invalid={!!errors.insuranceExpiry}
             />
@@ -391,7 +393,7 @@ export function VehicleForm({
                 }))
               }
               className={`input-luxury pl-12 w-full ${
-                errors.permitExpiry ? "border-red-400" : ""
+                errors.permitExpiry ? "border-error" : ""
               }`}
               aria-invalid={!!errors.permitExpiry}
             />

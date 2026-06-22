@@ -45,6 +45,16 @@
     box-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
   }
 
+  /* Accessible error color with sufficient contrast on dark background */
+  .text-error {
+    color: #ff6b6b;
+  }
+
+  /* Accessible success color */
+  .text-success {
+    color: #4ade80;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     *,
     *::before,

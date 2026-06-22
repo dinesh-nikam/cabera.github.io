@@ -63,6 +63,8 @@ module.exports = {
         "surface-light": "#1A1A1A",
         "text-primary": "#FFFFFF",
         "text-secondary": "#D9D9D9",
+        error: "#FF6B6B",
+        success: "#4ADE80",
       },
       fontFamily: {
         heading: ["Playfair Display", "serif"],

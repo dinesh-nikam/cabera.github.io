@@ -4,7 +4,13 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 export interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
-  variant?: "default" | "secondary" | "destructive" | "outline" | "success";
+  variant?:
+    | "default"
+    | "secondary"
+    | "destructive"
+    | "outline"
+    | "success"
+    | "warning";
 }
 
 const badgeVariants = {
@@ -16,6 +22,7 @@ const badgeVariants = {
   outline:
     "text-text-secondary border-white/10 hover:border-white/20 hover:scale-105",
   success: "bg-green-500/20 text-green-400 border-green-500/30",
+  warning: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
 };
 
 export function Badge({

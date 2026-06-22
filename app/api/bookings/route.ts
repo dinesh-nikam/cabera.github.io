@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
     endOfDay.setHours(23, 59, 59, 999);
     where.pickupDateTime = {
       gte: startOfDay,
-      lte: endOfDay
+      lte: endOfDay,
     };
   }
 
@@ -30,10 +30,10 @@ export async function GET(request: NextRequest) {
         customer: true,
         driver: {
           include: {
-            vehicle: true
-          }
+            vehicle: true,
+          },
         },
-        vehicle: true
+        vehicle: true,
       },
       orderBy: { createdAt: "desc" },
     });
@@ -41,7 +41,10 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(bookings);
   } catch (error) {
     console.error("Error listing bookings:", error);
-    return NextResponse.json({ error: "Failed to list bookings" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to list bookings" },
+      { status: 500 },
+    );
   }
 }
 
@@ -59,14 +62,17 @@ export async function POST(request: NextRequest) {
       // For manual booking inline creation:
       customerName,
       customerPhone,
-      customerEmail
+      customerEmail,
     } = body;
 
     // Validate required fields
     if (!pickupAddress || !dropAddress || !pickupDateTime) {
       return NextResponse.json(
-        { error: "Missing required fields: pickupAddress, dropAddress, pickupDateTime" },
-        { status: 400 }
+        {
+          error:
+            "Missing required fields: pickupAddress, dropAddress, pickupDateTime",
+        },
+        { status: 400 },
       );
     }
 
@@ -76,7 +82,7 @@ export async function POST(request: NextRequest) {
     if (!finalCustomerId && customerName && customerPhone) {
       // Check if customer already exists by phone
       let existingCustomer = await prisma.customer.findFirst({
-        where: { phone: customerPhone }
+        where: { phone: customerPhone },
       });
 
       if (!existingCustomer) {
@@ -87,8 +93,8 @@ export async function POST(request: NextRequest) {
             phone: customerPhone,
             email: customerEmail || null,
             city: "Pune", // Default city
-            source: "DIRECT"
-          }
+            source: "DIRECT",
+          },
         });
       }
       finalCustomerId = existingCustomer.id;
@@ -96,8 +102,11 @@ export async function POST(request: NextRequest) {
 
     if (!finalCustomerId) {
       return NextResponse.json(
-        { error: "A valid customerId or customer details (name and phone) are required" },
-        { status: 400 }
+        {
+          error:
+            "A valid customerId or customer details (name and phone) are required",
+        },
+        { status: 400 },
       );
     }
 
@@ -128,14 +137,17 @@ export async function POST(request: NextRequest) {
         paymentStatus: "PENDING",
       },
       include: {
-        customer: true
-      }
+        customer: true,
+      },
     });
 
     return NextResponse.json(booking, { status: 201 });
   } catch (error) {
     console.error("Error creating booking:", error);
-    return NextResponse.json({ error: "Failed to create booking" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to create booking" },
+      { status: 500 },
+    );
   }
 }
 
@@ -146,12 +158,19 @@ function calculateFare(data: any) {
     SEDAN: 1500,
     SUV: 2000,
     PREMIUM_SUV: 2500,
-    LUXURY: 4000
+    LUXURY: 4000,
   };
   const category = data.vehicleType?.toUpperCase() || "SEDAN";
   const basePrice = baseRates[category] || 1500;
   const distance = 150; // Pune - Mumbai default
-  const perKm = category === "LUXURY" ? 35 : category === "PREMIUM_SUV" ? 22 : category === "SUV" ? 20 : 15;
+  const perKm =
+    category === "LUXURY"
+      ? 35
+      : category === "PREMIUM_SUV"
+        ? 22
+        : category === "SUV"
+          ? 20
+          : 15;
   const distanceFare = distance * perKm;
   const toll = 320;
   const allowance = 300;
@@ -167,6 +186,6 @@ function calculateFare(data: any) {
     airportFee: 0,
     stateTax: Math.round(total * 0.05),
     nightCharges: 0,
-    total
+    total,
   };
 }

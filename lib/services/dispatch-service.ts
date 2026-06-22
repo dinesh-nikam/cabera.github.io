@@ -11,21 +11,27 @@ export async function getLiveDispatchQueue() {
   return prisma.booking.findMany({
     where: {
       status: {
-        in: ["PENDING", "CONFIRMED", "ASSIGNED", "DRIVER_REACHED", "TRIP_STARTED"]
-      }
+        in: [
+          "PENDING",
+          "CONFIRMED",
+          "ASSIGNED",
+          "DRIVER_REACHED",
+          "TRIP_STARTED",
+        ],
+      },
     },
     include: {
       customer: true,
       driver: {
         include: {
-          vehicle: true
-        }
+          vehicle: true,
+        },
       },
-      vehicle: true
+      vehicle: true,
     },
     orderBy: {
-      pickupDateTime: "asc"
-    }
+      pickupDateTime: "asc",
+    },
   });
 }
 
@@ -35,12 +41,12 @@ export async function getLiveDispatchQueue() {
 export async function assignDriverAndVehicle(
   bookingId: string,
   driverId: string,
-  vehicleId: string
+  vehicleId: string,
 ) {
   // Validate driver
   const driver = await prisma.driver.findUnique({
     where: { id: driverId },
-    include: { vehicle: true }
+    include: { vehicle: true },
   });
 
   if (!driver) {
@@ -52,7 +58,7 @@ export async function assignDriverAndVehicle(
 
   // Validate vehicle
   const vehicle = await prisma.vehicle.findUnique({
-    where: { id: vehicleId }
+    where: { id: vehicleId },
   });
 
   if (!vehicle) {
@@ -68,13 +74,13 @@ export async function assignDriverAndVehicle(
     data: {
       driverId,
       vehicleId,
-      status: "ASSIGNED"
+      status: "ASSIGNED",
     },
     include: {
       customer: true,
       driver: true,
-      vehicle: true
-    }
+      vehicle: true,
+    },
   });
 
   // Trigger WhatsApp notification for driver assignment
@@ -92,8 +98,8 @@ export async function assignDriverAndVehicle(
         resourceType: "BOOKING",
         resourceId: bookingId,
         newData: `Driver: ${driver.name}, Vehicle: ${vehicle.registrationNumber}`,
-        status: "SUCCESS"
-      }
+        status: "SUCCESS",
+      },
     });
   } catch (e) {
     console.error("Failed to create audit log:", e);
@@ -108,11 +114,11 @@ export async function assignDriverAndVehicle(
 export async function updateBookingStatus(
   bookingId: string,
   targetStatus: string,
-  userRole: string
+  userRole: string,
 ) {
   const booking = await prisma.booking.findUnique({
     where: { id: bookingId },
-    include: { customer: true, driver: true, vehicle: true }
+    include: { customer: true, driver: true, vehicle: true },
   });
 
   if (!booking) {
@@ -129,12 +135,12 @@ export async function updateBookingStatus(
   const canTransition = bookingStatusStateMachine.canTransition(
     currentStatus as any,
     targetStatus,
-    userRole
+    userRole,
   );
 
   if (!canTransition) {
     throw new Error(
-      `Role ${userRole} is not authorized to transition booking from ${currentStatus} to ${targetStatus}`
+      `Role ${userRole} is not authorized to transition booking from ${currentStatus} to ${targetStatus}`,
     );
   }
 
@@ -142,7 +148,7 @@ export async function updateBookingStatus(
   const updatedBooking = await prisma.booking.update({
     where: { id: bookingId },
     data: { status: targetStatus },
-    include: { customer: true, driver: true, vehicle: true }
+    include: { customer: true, driver: true, vehicle: true },
   });
 
   // Trigger status notifications
@@ -161,8 +167,8 @@ export async function updateBookingStatus(
         resourceId: bookingId,
         oldData: currentStatus,
         newData: targetStatus,
-        status: "SUCCESS"
-      }
+        status: "SUCCESS",
+      },
     });
   } catch (e) {
     console.error("Failed to write audit log:", e);

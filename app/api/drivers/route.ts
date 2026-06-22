@@ -7,8 +7,12 @@ export async function GET(request: NextRequest) {
   const status = searchParams.get("status") || undefined;
   const isOnlineStr = searchParams.get("isOnline");
   const search = searchParams.get("search") || undefined;
-  const page = searchParams.get("page") ? parseInt(searchParams.get("page")!) : 1;
-  const limit = searchParams.get("limit") ? parseInt(searchParams.get("limit")!) : 20;
+  const page = searchParams.get("page")
+    ? parseInt(searchParams.get("page")!)
+    : 1;
+  const limit = searchParams.get("limit")
+    ? parseInt(searchParams.get("limit")!)
+    : 20;
 
   let isOnline: boolean | undefined = undefined;
   if (isOnlineStr === "true") isOnline = true;
@@ -20,13 +24,16 @@ export async function GET(request: NextRequest) {
       isOnline,
       search,
       page,
-      limit
+      limit,
     });
 
     return NextResponse.json(result);
   } catch (error) {
     console.error("Error listing drivers:", error);
-    return NextResponse.json({ error: "Failed to list drivers" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to list drivers" },
+      { status: 500 },
+    );
   }
 }
 
@@ -34,10 +41,22 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, phone, alternativePhone, aadhaar, licenseNumber, licenseExpiry, experience, vehicleId } = body;
+    const {
+      name,
+      phone,
+      alternativePhone,
+      aadhaar,
+      licenseNumber,
+      licenseExpiry,
+      experience,
+      vehicleId,
+    } = body;
 
     if (!name || !phone || !licenseNumber || !licenseExpiry) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Missing required fields" },
+        { status: 400 },
+      );
     }
 
     const driver = await createDriver({
@@ -48,13 +67,14 @@ export async function POST(request: NextRequest) {
       licenseNumber,
       licenseExpiry: new Date(licenseExpiry),
       experience: experience ? parseInt(experience) : 0,
-      vehicleId
+      vehicleId,
     });
 
     return NextResponse.json(driver, { status: 201 });
   } catch (error) {
     console.error("Error creating driver:", error);
-    const message = error instanceof Error ? error.message : "Failed to create driver";
+    const message =
+      error instanceof Error ? error.message : "Failed to create driver";
     return NextResponse.json({ error: message }, { status: 400 });
   }
 }

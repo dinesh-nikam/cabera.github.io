@@ -101,7 +101,7 @@ export function ServicesSection() {
             <motion.a
               key={service.title}
               href={service.href}
-              className="card-luxury p-6 text-center group cursor-pointer"
+              className="card-luxury p-6 text-center group cursor-pointer focus:outline-none focus:ring-2 focus:ring-luxury-400 focus:ring-offset-2 focus:ring-offset-background min-h-[88px]"
               variants={{
                 hidden: { opacity: 0, y: 30 },
                 visible: { opacity: 1, y: 0 },

@@ -41,7 +41,7 @@ export function HeroSection() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1, duration: 0.5 }}
             >
-              <Route className="w-4 h-4 text-luxury-400 animate-spin-slow" />
+              <Route className="w-4 h-4 text-luxury-400 animate-spin-slow motion-reduce:animate-none" />
               <span className="text-xs font-semibold uppercase tracking-widest text-luxury-400 font-body">
                 Pune ↔ Mumbai Executive Corridor
               </span>

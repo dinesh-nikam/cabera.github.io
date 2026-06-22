@@ -161,6 +161,9 @@ model Driver {
   isOnline        Boolean   @default(false)
   lastLocationLat Float?
   lastLocationLng Float?
+  lastUpdatedAt   DateTime?
+  heading         Float?
+  speed           Float?
   userId          String?   @unique
   user            User?     @relation(fields: [userId], references: [id])
   vehicle         Vehicle?

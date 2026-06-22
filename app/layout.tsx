@@ -41,7 +41,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="scroll-smooth bg-background">
+    <html lang="en-IN" className="scroll-smooth bg-background">
       <body className="bg-background text-text-primary antialiased relative">
         <CustomCursor />
         <div className="noise-overlay" />

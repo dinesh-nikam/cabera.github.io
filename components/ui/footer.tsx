@@ -46,19 +46,21 @@ export function Footer() {
               expressway corridor. Tailored for corporate executives and premium
               travelers.
             </p>
-            {/* Social Icons */}
+            {/* Social Icons - 44x44px minimum touch targets */}
             <div className="flex gap-4 items-center pt-2">
               <a
                 href="#"
-                className="p-2 bg-white/5 rounded-full hover:bg-luxury-400 hover:text-background transition-colors duration-300"
+                className="flex items-center justify-center w-11 h-11 bg-white/5 rounded-full hover:bg-luxury-400 hover:text-background transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-luxury-400"
+                aria-label="WhatsApp"
               >
-                <MessageCircle className="w-4 h-4 text-green-400 group-hover:text-background" />
+                <MessageCircle className="w-5 h-5 text-green-400" />
               </a>
               <a
                 href="#"
-                className="p-2 bg-white/5 rounded-full hover:bg-luxury-400 hover:text-background transition-colors duration-300"
+                className="flex items-center justify-center w-11 h-11 bg-white/5 rounded-full hover:bg-luxury-400 hover:text-background transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-luxury-400"
+                aria-label="Call"
               >
-                <Phone className="w-4 h-4 text-luxury-400 group-hover:text-background" />
+                <Phone className="w-5 h-5 text-luxury-400" />
               </a>
             </div>
           </div>

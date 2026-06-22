@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getDriver, updateDriver, setDriverOnlineStatus, updateDriverLocation } from "@/lib/services/driver-service";
+import {
+  getDriver,
+  updateDriver,
+  setDriverOnlineStatus,
+  updateDriverLocation,
+} from "@/lib/services/driver-service";
 
 type RouteParams = {
-  params: Promise<{ id: string }>
-}
+  params: Promise<{ id: string }>;
+};
 
 // GET /api/drivers/[id] - Fetch a single driver's profile
 export async function GET(request: NextRequest, { params }: RouteParams) {
@@ -16,7 +21,10 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     return NextResponse.json(driver);
   } catch (error) {
     console.error("Error fetching driver:", error);
-    return NextResponse.json({ error: "Failed to fetch driver" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to fetch driver" },
+      { status: 500 },
+    );
   }
 }
 
@@ -35,19 +43,26 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
     // Update location coordinate mocks if passed
     if (latitude !== undefined && longitude !== undefined) {
-      const driver = await updateDriverLocation(id, parseFloat(latitude), parseFloat(longitude));
+      const driver = await updateDriverLocation(
+        id,
+        parseFloat(latitude),
+        parseFloat(longitude),
+      );
       return NextResponse.json(driver);
     }
 
     // Otherwise, perform regular driver details update
     const updated = await updateDriver(id, {
       ...data,
-      licenseExpiry: data.licenseExpiry ? new Date(data.licenseExpiry) : undefined,
+      licenseExpiry: data.licenseExpiry
+        ? new Date(data.licenseExpiry)
+        : undefined,
     });
     return NextResponse.json(updated);
   } catch (error) {
     console.error("Error updating driver:", error);
-    const message = error instanceof Error ? error.message : "Failed to update driver";
+    const message =
+      error instanceof Error ? error.message : "Failed to update driver";
     return NextResponse.json({ error: message }, { status: 400 });
   }
 }

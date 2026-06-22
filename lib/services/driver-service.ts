@@ -34,11 +34,8 @@ export interface DriverPaginatedResponse {
 export async function createDriver(data: DriverFormData): Promise<Driver> {
   const existing = await prisma.driver.findFirst({
     where: {
-      OR: [
-        { phone: data.phone },
-        { licenseNumber: data.licenseNumber }
-      ]
-    }
+      OR: [{ phone: data.phone }, { licenseNumber: data.licenseNumber }],
+    },
   });
 
   if (existing) {
@@ -54,8 +51,8 @@ export async function createDriver(data: DriverFormData): Promise<Driver> {
         phone: data.phone,
         name: data.name,
         role: "DRIVER",
-        status: "ACTIVE"
-      }
+        status: "ACTIVE",
+      },
     });
     finalUserId = user.id;
   }
@@ -71,15 +68,14 @@ export async function createDriver(data: DriverFormData): Promise<Driver> {
       experience: data.experience || 0,
       status: "ACTIVE",
       userId: finalUserId,
-      vehicleId: data.vehicleId || null
-    }
+    },
   });
 
   // If vehicle is specified, update the vehicle assignments
   if (data.vehicleId) {
     await prisma.vehicle.update({
       where: { id: data.vehicleId },
-      data: { driverId: driver.id }
+      data: { driverId: driver.id },
     });
   }
 
@@ -89,7 +85,9 @@ export async function createDriver(data: DriverFormData): Promise<Driver> {
 /**
  * Get all drivers with filters
  */
-export async function getDrivers(filters: DriverFilters = {}): Promise<DriverPaginatedResponse> {
+export async function getDrivers(
+  filters: DriverFilters = {},
+): Promise<DriverPaginatedResponse> {
   const { status, isOnline, search, page = 1, limit = 20 } = filters;
 
   const where: any = {};
@@ -100,7 +98,7 @@ export async function getDrivers(filters: DriverFilters = {}): Promise<DriverPag
     where.OR = [
       { name: { contains: search } },
       { phone: { contains: search } },
-      { licenseNumber: { contains: search } }
+      { licenseNumber: { contains: search } },
     ];
   }
 
@@ -111,18 +109,18 @@ export async function getDrivers(filters: DriverFilters = {}): Promise<DriverPag
       take: limit,
       include: {
         vehicle: true,
-        user: true
+        user: true,
       },
-      orderBy: { createdAt: "desc" }
+      orderBy: { createdAt: "desc" },
     }),
-    prisma.driver.count({ where })
+    prisma.driver.count({ where }),
   ]);
 
   return {
     drivers,
     total,
     pages: Math.ceil(total / limit),
-    currentPage: page
+    currentPage: page,
   };
 }
 
@@ -137,9 +135,9 @@ export async function getDriver(id: string) {
       user: true,
       bookings: {
         take: 10,
-        orderBy: { createdAt: "desc" }
-      }
-    }
+        orderBy: { createdAt: "desc" },
+      },
+    },
   });
 }
 
@@ -152,13 +150,13 @@ export async function updateDriver(id: string, data: Partial<DriverFormData>) {
     // Clear old vehicle association
     await prisma.vehicle.updateMany({
       where: { driverId: id },
-      data: { driverId: null }
+      data: { driverId: null },
     });
 
     if (data.vehicleId) {
       await prisma.vehicle.update({
         where: { id: data.vehicleId },
-        data: { driverId: id }
+        data: { driverId: id },
       });
     }
   }
@@ -169,29 +167,36 @@ export async function updateDriver(id: string, data: Partial<DriverFormData>) {
   return prisma.driver.update({
     where: { id },
     data: updateData,
-    include: { vehicle: true }
+    include: { vehicle: true },
   });
 }
 
 /**
  * Update driver location mock
  */
-export async function updateDriverLocation(id: string, lat: number, lng: number): Promise<Driver> {
+export async function updateDriverLocation(
+  id: string,
+  lat: number,
+  lng: number,
+): Promise<Driver> {
   return prisma.driver.update({
     where: { id },
     data: {
       lastLocationLat: lat,
-      lastLocationLng: lng
-    }
+      lastLocationLng: lng,
+    },
   });
 }
 
 /**
  * Set online/offline status
  */
-export async function setDriverOnlineStatus(id: string, isOnline: boolean): Promise<Driver> {
+export async function setDriverOnlineStatus(
+  id: string,
+  isOnline: boolean,
+): Promise<Driver> {
   return prisma.driver.update({
     where: { id },
-    data: { isOnline }
+    data: { isOnline },
   });
 }
