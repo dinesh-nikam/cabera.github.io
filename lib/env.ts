@@ -4,6 +4,11 @@
  */
 
 export function validateEnv() {
+  // Prevent validation from running on the client-side/browser
+  if (typeof window !== "undefined") {
+    return;
+  }
+
   const missingRequired: string[] = [];
   const missingOptional: string[] = [];
 
